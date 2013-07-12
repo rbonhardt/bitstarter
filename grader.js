@@ -26,6 +26,23 @@ var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var sys = require('util'); 
+var rest = require('restler');
+var URL_DEFAULT = "http://infinite-badlands-5939.herokuapp.com/";
+
+var assertUrlExists = function (val) {
+    console.log(val);
+    return val.toString();
+};
+
+var callThis = function(result) {
+if (data instanceof Error) {
+    sys.puts('Error: ' + result.message);
+    this.retry(5000); // try again after 5 sec
+  } else {
+    sys.puts(result);
+  }
+};
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -49,6 +66,7 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
+	// seeing how checks work console.log(ii, checks[ii]);
 	var present = $(checks[ii]).length > 0;
 	out[checks[ii]] = present;
     }
@@ -63,12 +81,25 @@ var clone = function(fn) {
 
 if(require.main == module) {
     program
-	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-	.option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-	.parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+        .option('-c, --checks <check_file>', 'checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+        .option('-f, --file <html_file>','index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url <url>', 'url to check', URL_DEFAULT)
+        .parse(process.argv);
+if (program.url) {
+    rest.get(program.url).on('complete', function(result) {
+      //console.log(program.url + "url");
+      //fs.writeFileSync("myfile.html",result); check to see result
+      var checkJson = checkHtmlFile("index.html", program.checks);
+      var outJson = JSON.stringify(checkJson, null, 4);
+      console.log(outJson);
+    });
+
 } else {
-    exports.checkHtmlFile = checkHtmlFile;
+  //confused why else never runs
+  //check to see if this runs console.log(result + "result");
+  // check to see if program.file present console.log(program.file+ "file");
+  var checkJson = checkHtmlFile(result, program.checks);
+  var outJson = JSON.stringify(checkJson, null, 4);
+  console.log(outJson);
+}
 }
